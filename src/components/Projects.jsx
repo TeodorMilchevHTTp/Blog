@@ -42,7 +42,7 @@ const Projects = () => {
 
   return (
     <section>
-      <h2 className="text-2xl font-semibold text-primary-100 text-center mb-8">My Projects</h2>
+      <h2 className="text-2xl font-semibold text-primary-100 text-center mb-8">Myyy Projects</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {projectList.map((project, index) => (
           <ProjectCard key={index} {...project} />
