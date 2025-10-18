@@ -1,5 +1,3 @@
-import React from 'react';
-
 const AboutMe = () => (
   <section className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 space-y-4">
     <h2 className="text-2xl font-semibold text-primary-100 text-center">About Me</h2>

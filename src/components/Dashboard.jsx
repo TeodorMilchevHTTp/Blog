@@ -2,6 +2,16 @@ import React from 'react';
 import AboutMe from './AboutMe';
 import Projects from './Projects';
 import WebsiteLinks from './WebsiteLinks';
+import { Link } from 'react-router-dom';
+ 
+//Navbar component could be added here for better structure
+const Navbar = () => (
+  <nav className="flex justify-center space-x-6 mb-8">
+    <Link to="/games" className="text-slate-300 hover:text-primary-100 transition">Games</Link>
+    <Link to="/projects" className="text-slate-300 hover:text-primary-100 transition">Projects</Link>
+    <Link to="/links" className="text-slate-300 hover:text-primary-100 transition">Website</Link>
+  </nav>
+)
 
 const Dashboard = () => {
   return (
@@ -12,6 +22,10 @@ const Dashboard = () => {
           <p className="mt-2 text-slate-400">Built with React + Tailwind CSS</p>
         </header>
 
+        <header>
+          <Navbar />
+        </header>
+      
         <AboutMe />
         <Projects />
         <WebsiteLinks />
