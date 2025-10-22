@@ -76,6 +76,11 @@ app.get('/api/rates', async (req, res) => {
 const gamesRouter = require('./routes/games');
 app.use('/games', gamesRouter);
 
+// Steam router
+const steamRouter = require('./routes/steam');
+app.use('/api/steam', steamRouter);
+
+
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '..', 'build')));
 
