@@ -1,3 +1,5 @@
+import {motion} from 'framer-motion';
+
 const ProjectCard = ({ title, description, link }) => (
   <a
     href={link}
@@ -39,14 +41,19 @@ const Projects = () => {
   ];
 
   return (
-    <section>
+    <motion.section
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8"
+    >
       <h2 className="text-2xl font-semibold text-primary-100 text-center mb-8">My Projects</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {projectList.map((project, index) => (
           <ProjectCard key={index} {...project} />
         ))}
       </div>
-    </section>
+    </motion.section>
   );
 };
 

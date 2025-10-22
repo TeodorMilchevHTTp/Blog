@@ -1,5 +1,3 @@
-import React from 'react';
-
 const WebsiteLinks = () => {
   const links = [
     { name: "GitHub", url: "https://github.com/yourusername" },

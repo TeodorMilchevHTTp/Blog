@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import {motion} from 'framer-motion';
 
 const CurrencyAPI = () => {
   const [rates, setRates] = useState({ usd: {}, bgn: {} });
@@ -42,6 +43,12 @@ const CurrencyAPI = () => {
   const currencies = Object.keys(rates.usd);
 
   return (
+    <motion.section
+      className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      >
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
         <thead className="text-slate-300 border-b border-slate-600">
@@ -64,6 +71,7 @@ const CurrencyAPI = () => {
         </tbody>
       </table>
     </div>
+    </motion.section>
   );
 };
 
