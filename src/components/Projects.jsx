@@ -7,7 +7,8 @@ const ProjectCard = ({ title, description, link }) => (
     rel="noopener noreferrer"
     whileHover={{scale: 1.1, rotate: -1}}
     whileTap={{scale : 0.95, rotate: 0}}
-    className="block bg-white/10 backdrop-blur rounded-lg p-6 shadow-soft transition-all duration-200"
+    className="block bg-gray-50 dark:bg-white/10 ... transition-colors duration-300"
+
   >
     {/* Optional: Website Thumbnail */}
     <img
@@ -47,7 +48,7 @@ const Projects = () => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8"
+      className="bg-light-card dark:bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 transition-colors duration-500"
     >
       <h2 className="text-2xl font-semibold text-primary-100 text-center mb-8">My Projects</h2>
       <div className="grid gap-6 md:grid-cols-2">

@@ -80,14 +80,14 @@ const CurrencyAPI = () => {
 
   return (
     <motion.section
-      className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8"
+      className="bg-light-card dark:bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 transition-colors duration-500"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
     >
       <h2 className="text-2xl font-semibold text-primary-100 text-center mb-4">Live Exchange Rates</h2>
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-left text-sm bg-gray-50 dark:bg-transparent transition-colors duration-300">
           <thead className="text-slate-300 border-b border-slate-600">
             <tr>
               <th className="py-2 px-4">Currency</th>
@@ -103,7 +103,7 @@ const CurrencyAPI = () => {
               const bgnChange = getRateChange("bgn", currency);
 
               return (
-                <tr key={currency} className="border-b border-slate-700 hover:bg-slate-800/50 transition">
+                <tr key={currency} className="border-b border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-800/50 transition">
                   <td className="py-2 px-4 font-medium text-white">{currency}</td>
 
                   {/* USD Rate with animation */}
