@@ -2,6 +2,7 @@
   "name": "my-blog",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:5000",
   "dependencies": {
     "@react-navigation/drawer": "^7.5.10",
     "@testing-library/dom": "^10.4.1",
@@ -14,6 +15,7 @@
     "express": "^5.1.0",
     "framer-motion": "^12.23.24",
     "mongoose": "^8.19.1",
+    "node-fetch": "^2.7.0",
     "nodemon": "^3.1.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

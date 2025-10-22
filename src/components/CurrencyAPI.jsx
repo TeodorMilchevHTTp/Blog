@@ -7,50 +7,47 @@ const CurrencyAPI = () => {
   const [prevRates, setPrevRates] = useState({ usd: {}, bgn: {} });
   const [rateHistory, setRateHistory] = useState({ usd: {}, bgn: {} });
   const [loading, setLoading] = useState(true);
-
-  const apiKey = process.env.REACT_APP_FAST_FOREX_API_KEY;
   const intervalRef = useRef();
 
   const fetchRates = async () => {
-    try {
-      const [resUSD, resBGN] = await Promise.all([
-        fetch(`https://api.fastforex.io/fetch-multi?from=USD&to=EUR,GBP,JPY&api_key=${apiKey}`),
-        fetch(`https://api.fastforex.io/fetch-multi?from=BGN&to=EUR,GBP,JPY&api_key=${apiKey}`)
-      ]);
+  try {
+    // Fetch from your backend API endpoint
+    const res = await fetch('/api/rates');
+    if (!res.ok) throw new Error('Network response was not ok');
 
-      const dataUSD = await resUSD.json();
-      const dataBGN = await resBGN.json();
+    const data = await res.json();
 
-      const newRates = {
-        usd: dataUSD.results || {},
-        bgn: dataBGN.results || {}
-      };
+    const newRates = {
+      usd: data.usd || {},
+      bgn: data.bgn || {}
+    };
 
-      setPrevRates(rates); // store previous before setting new
-      setRates(newRates);
+    setPrevRates(rates); // store previous before setting new
+    setRates(newRates);
 
-      // Update history for sparklines
-      setRateHistory((prev) => {
-        const updated = { usd: { ...prev.usd }, bgn: { ...prev.bgn } };
+    // Update history for sparklines
+    setRateHistory((prev) => {
+      const updated = { usd: { ...prev.usd }, bgn: { ...prev.bgn } };
 
-        Object.entries(newRates.usd).forEach(([currency, rate]) => {
-          if (!updated.usd[currency]) updated.usd[currency] = [];
-          updated.usd[currency] = [...updated.usd[currency].slice(-19), rate];
-        });
-
-        Object.entries(newRates.bgn).forEach(([currency, rate]) => {
-          if (!updated.bgn[currency]) updated.bgn[currency] = [];
-          updated.bgn[currency] = [...updated.bgn[currency].slice(-19), rate];
-        });
-
-        return updated;
+      Object.entries(newRates.usd).forEach(([currency, rate]) => {
+        if (!updated.usd[currency]) updated.usd[currency] = [];
+        updated.usd[currency] = [...updated.usd[currency].slice(-19), rate];
       });
 
-      setLoading(false);
-    } catch (err) {
-      console.error("Failed to fetch exchange rates", err);
-    }
-  };
+      Object.entries(newRates.bgn).forEach(([currency, rate]) => {
+        if (!updated.bgn[currency]) updated.bgn[currency] = [];
+        updated.bgn[currency] = [...updated.bgn[currency].slice(-19), rate];
+      });
+
+      return updated;
+    });
+
+    setLoading(false);
+  } catch (err) {
+    console.error("Failed to fetch exchange rates", err);
+  }
+};
+
 
   useEffect(() => {
     fetchRates();
