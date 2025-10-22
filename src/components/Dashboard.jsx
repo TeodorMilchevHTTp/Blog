@@ -18,7 +18,7 @@ const Navbar = () => (
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1b2d24] via-[#22362c] to-[#16231c] text-white px-6 py-12">
+    <div className="min-h-screen parallax-bg bg-gradient-to-br from-[#1b2d24] via-[#22362c] to-[#16231c] text-white px-6 py-12">
       <div className="max-w-4xl mx-auto space-y-16">
         <header className="text-center">
           <h1 className="text-4xl font-extrabold text-primary-100">Welcome to My Coding Portfolio</h1>

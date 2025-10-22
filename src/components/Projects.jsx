@@ -1,11 +1,13 @@
 import {motion} from 'framer-motion';
 
 const ProjectCard = ({ title, description, link }) => (
-  <a
+  <motion.a
     href={link}
     target="_blank"
     rel="noopener noreferrer"
-    className="block bg-white/10 backdrop-blur rounded-lg p-6 shadow-soft hover:shadow-medium transition-all duration-200 hover:scale-[1.02] transform"
+    whileHover={{scale: 1.1, rotate: -1}}
+    whileTap={{scale : 0.95, rotate: 0}}
+    className="block bg-white/10 backdrop-blur rounded-lg p-6 shadow-soft transition-all duration-200"
   >
     {/* Optional: Website Thumbnail */}
     <img
@@ -17,7 +19,7 @@ const ProjectCard = ({ title, description, link }) => (
     />
     <h3 className="text-lg font-semibold text-primary-100">{title}</h3>
     <p className="text-slate-300 mt-2">{description}</p>
-  </a>
+  </motion.a>
 );
 
 
