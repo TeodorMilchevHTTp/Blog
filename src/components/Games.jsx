@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Sample static data (your existing games)
-const initialGames = [
-  { id: 1, title: 'Elden Ring', review: 'Amazing gameplay, challenging bosses.' },
-  { id: 2, title: 'Hades', review: 'Fast-paced and addicting rogue-like.' },
-  { id: 3, title: 'Celeste', review: 'Emotional platformer with tight controls.' },
-];
-
 const Games = () => {
-  const [games, setGames] = useState(initialGames);
+  const [games, setGames] = useState([]); // start empty
   const [selectedGame, setSelectedGame] = useState(null);
+  const [editGame, setEditGame] = useState(null);
+  const [newReview, setNewReview] = useState('');
   const isAdmin = (() => {
     const user = localStorage.getItem('user');
     return user && JSON.parse(user).role === 'admin';
@@ -19,40 +14,55 @@ const Games = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [steamGames, setSteamGames] = useState([]);
 
-  // Fetch Steam games for demo
   useEffect(() => {
-  async function fetchSteamGames() {
-    try {
-      const res = await fetch('/api/steam/games'); // Fetch from your backend
-      const data = await res.json();
-      setSteamGames(data.applist.apps.slice(0, 1000));
-    } catch (err) {
-      console.error(err);
+    async function fetchSteamGames() {
+      try {
+        const res = await fetch('/api/steam/games');
+        const data = await res.json();
+        setSteamGames(data.applist.apps.slice(0, 1000));
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }
-  fetchSteamGames();
-}, []);
+    fetchSteamGames();
+  }, []);
 
   const handleDelete = (id) => {
+    if (!isAdmin) return;
     setGames((prev) => prev.filter((game) => game.id !== id));
   };
 
   const handleCardClick = (game) => setSelectedGame(game);
-
   const closeModal = () => setSelectedGame(null);
-
   const handleAddNewGameClick = () => setShowAddModal(true);
   const closeAddModal = () => setShowAddModal(false);
 
   const handleSelectSteamGame = (game) => {
-    // Add selected Steam game temporarily
-    setGames((prev) => [
-      ...prev,
-      { id: Date.now(), title: game.name, review: 'Newly added game!' },
-    ]);
+    const newGame = {
+      id: Date.now(),
+      title: game.name,
+      review: 'No opinion yet. (Admin can edit this)',
+      appid: game.appid,
+    };
+    setGames((prev) => [...prev, newGame]);
+    setShowAddModal(false);
   };
 
-  // Filter Steam games by search query
+  const handleEditClick = (game) => {
+    setEditGame(game);
+    setNewReview(game.review || '');
+  };
+
+  const handleSaveEdit = () => {
+    if (!isAdmin) return;
+    setGames((prev) =>
+      prev.map((g) =>
+        g.id === editGame.id ? { ...g, review: newReview } : g
+      )
+    );
+    setEditGame(null);
+  };
+
   const filteredSteamGames = steamGames.filter((g) =>
     g.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -81,9 +91,17 @@ const Games = () => {
             <div
               key={game.id}
               onClick={() => handleCardClick(game)}
-              className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/20 p-6 rounded-xl shadow-lg hover:shadow-xl cursor-pointer hover:scale-[1.03] transition-transform relative group"
+              className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/20 p-4 rounded-xl shadow-lg hover:shadow-xl cursor-pointer hover:scale-[1.03] transition-transform relative group"
             >
-              <h2 className="text-2xl mt-5 font-semibold mb-3 text-primary-700 dark:text-primary-300">
+              {game.appid && (
+                <img
+                  src={`https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`}
+                  alt={game.title}
+                  className="rounded-md mb-3 w-full object-cover"
+                  onError={(e) => (e.target.style.display = 'none')}
+                />
+              )}
+              <h2 className="text-2xl font-semibold mb-2 text-primary-700 dark:text-primary-300">
                 {game.title}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 line-clamp-3">
@@ -95,7 +113,7 @@ const Games = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Edit', game.id);
+                      handleEditClick(game);
                     }}
                     className="text-sm font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition"
                   >
@@ -115,7 +133,6 @@ const Games = () => {
             </div>
           ))}
 
-          {/* Add New Game Card */}
           {isAdmin && (
             <div
               onClick={handleAddNewGameClick}
@@ -128,69 +145,105 @@ const Games = () => {
         </div>
       </div>
 
-      {/* Steam Add Game Modal */}
-{showAddModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 pt-20 px-4">
-    <div className="bg-light-card dark:bg-[#1f1f1f] rounded-xl p-6 max-w-4xl w-full shadow-xl">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-primary-100">Add New Game</h2>
-        <button
-          onClick={closeAddModal}
-          className="text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold"
-        >
-          &times;
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="Search Steam Games..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full p-3 rounded border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-white mb-4"
-      />
-
-      {/* Only show results if searchQuery is not empty */}
-      {searchQuery && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
-          {filteredSteamGames.map((game) => (
-            <div
-              key={game.appid}
-              onClick={() => handleSelectSteamGame(game)}
-              className="cursor-pointer hover:scale-105 transition-transform text-center"
-            >
-              <img
-                src={`https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_184x69.jpg`}
-                alt={game.name}
-                className="rounded-md mb-2 w-full object-cover"
-                onError={(e) => (e.target.style.display = 'none')}
-              />
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-300">{game.name}</p>
+      {/* Add Game Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 pt-20 px-4">
+          <div className="bg-light-card dark:bg-[#1f1f1f] rounded-xl p-6 max-w-4xl w-full shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-primary-100">Add New Game</h2>
+              <button
+                onClick={closeAddModal}
+                className="text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold"
+              >
+                &times;
+              </button>
             </div>
-          ))}
+
+            <input
+              type="text"
+              placeholder="Search Steam Games..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-3 rounded border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-white mb-4"
+            />
+
+            {searchQuery && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+                {filteredSteamGames.map((game) => (
+                  <div
+                    key={game.appid}
+                    onClick={() => handleSelectSteamGame(game)}
+                    className="cursor-pointer hover:scale-105 transition-transform text-center"
+                  >
+                    <img
+                      src={`https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`}
+                      alt={game.name}
+                      className="rounded-md mb-2 w-full object-cover"
+                      onError={(e) => (e.target.style.display = 'none')}
+                    />
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-300">{game.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
 
-      {/* Game Modal */}
+      {/* View Game Modal (for all users) */}
       {selectedGame && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/30 rounded-xl p-8 max-w-lg w-full relative shadow-xl">
             <button
               onClick={closeModal}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold transition"
-              aria-label="Close modal"
             >
               &times;
             </button>
+
+            {selectedGame.appid && (
+              <img
+                src={`https://steamcdn-a.akamaihd.net/steam/apps/${selectedGame.appid}/capsule_231x87.jpg`}
+                alt={selectedGame.title}
+                className="rounded-md mb-4 w-full object-cover"
+              />
+            )}
+
             <h2 className="text-3xl font-extrabold mb-5 text-primary-700 dark:text-primary-300">
               {selectedGame.title}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               {selectedGame.review}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Game Modal (admin only) */}
+      {editGame && isAdmin && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/30 rounded-xl p-8 max-w-md w-full relative shadow-xl">
+            <button
+              onClick={() => setEditGame(null)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold transition"
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-primary-700 dark:text-primary-300">
+              Edit Your Opinion for {editGame.title}
+            </h2>
+            <textarea
+              value={newReview}
+              onChange={(e) => setNewReview(e.target.value)}
+              className="w-full p-3 rounded-md border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-white mb-4"
+              rows={4}
+            />
+            <button
+              onClick={handleSaveEdit}
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-md shadow-md transition"
+            >
+              Save Review
+            </button>
           </div>
         </div>
       )}

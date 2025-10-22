@@ -1,13 +1,53 @@
+// routes/games.js
 const express = require('express');
-const axios = require('axios');
-const https = require('https');
+const router = express.Router();
+const Game = require('../models/Games');
 
-const axiosInstance = axios.create({
-  httpsAgent: new https.Agent({  
-    family: 4  // Force IPv4
-  })
+// Get all games
+router.get('/', async (req, res) => {
+  try {
+    const games = await Game.find().sort({ createdAt: -1 });
+    res.json(games);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-const router = express.Router();
+// Add a new game
+router.post('/', async (req, res) => {
+  try {
+    const { title, review, appid, imageUrl } = req.body;
+    const newGame = new Game({ title, review, appid, imageUrl });
+    await newGame.save();
+    res.status(201).json(newGame);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Update a game's review/opinion
+router.put('/:id', async (req, res) => {
+  try {
+    const { review } = req.body;
+    const updatedGame = await Game.findByIdAndUpdate(
+      req.params.id,
+      { review },
+      { new: true }
+    );
+    res.json(updatedGame);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a game
+router.delete('/:id', async (req, res) => {
+  try {
+    await Game.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Game deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
