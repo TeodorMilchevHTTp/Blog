@@ -73,7 +73,6 @@ const Dashboard = () => {
           <Projects />
         </section>
         <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
-          <h2 className="text-2xl font-semibold mb-4 text-primary-100 text-center">Live Exchange Rates</h2>
           <CurrencyAPI />
         </section>
         <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
