@@ -19,7 +19,8 @@ const ProjectCard = ({ title, description, link }) => (
       onError={(e) => (e.target.style.display = 'none')}
     />
     <h3 className="text-lg font-semibold text-primary-100">{title}</h3>
-    <p className="text-slate-300 mt-2">{description}</p>
+    <p className="text-gray-800 dark:text-slate-300 mt-2">{description}</p>
+
   </motion.a>
 );
 

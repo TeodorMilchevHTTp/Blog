@@ -73,9 +73,9 @@ const CurrencyAPI = () => {
   };
 
   const getColor = (change) => {
-    return change === 'up' ? 'text-green-400' :
-           change === 'down' ? 'text-red-400' :
-           'text-slate-300';
+    return change === 'up' ? 'text-green-600 dark:text-green-400' :
+           change === 'down' ? 'text-green-600 dark:text-green-400' :
+           'text-gray-800 dark:text-slate-300';
   };
 
   return (
@@ -88,7 +88,7 @@ const CurrencyAPI = () => {
       <h2 className="text-2xl font-semibold text-primary-100 text-center mb-4">Live Exchange Rates</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm bg-gray-50 dark:bg-transparent transition-colors duration-300">
-          <thead className="text-slate-300 border-b border-slate-600">
+          <thead className="text-gray-700 dark:text-slate-300 border-b border-slate-600">
             <tr>
               <th className="py-2 px-4">Currency</th>
               <th className="py-2 px-4">USD →</th>
@@ -104,7 +104,7 @@ const CurrencyAPI = () => {
 
               return (
                 <tr key={currency} className="border-b border-gray-300 dark:border-slate-700 hover:bg-gray-200 dark:hover:bg-slate-800/50 transition">
-                  <td className="py-2 px-4 font-medium text-white">{currency}</td>
+                  <td className="py-2 px-4 font-medium text-gray-900 dark:text-white">{currency}</td>
 
                   {/* USD Rate with animation */}
                   <td className={`py-2 px-4 font-semibold ${getColor(usdChange)}`}>

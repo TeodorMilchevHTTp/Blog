@@ -9,10 +9,10 @@ import React from 'react';
 
 const Navbar = () => (
   <nav className="flex justify-center space-x-6 mb-8">
-    <Link to="/games" className="text-slate-300 hover:text-primary-100 transition">Games</Link>
-    <Link to="/projects" className="text-slate-300 hover:text-primary-100 transition">Projects</Link>
-    <Link to="/links" className="text-slate-300 hover:text-primary-100 transition">Website</Link>
-    <Link to="/login" className="text-slate-300 hover:text-primary-100 transition">Login</Link>
+    <Link to="/games" className="text-gray-800 dark:text-slate-300 text-center">Games</Link>
+    <Link to="/projects" className="text-gray-800 dark:text-slate-300 text-center">Projects</Link>
+    <Link to="/links" className="text-gray-800 dark:text-slate-300 text-center">Website</Link>
+    <Link to="/login" className="text-gray-800 dark:text-slate-300 text-center">Login</Link>
   </nav>
 );
 
