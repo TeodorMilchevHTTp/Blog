@@ -3,7 +3,7 @@ import {motion} from 'framer-motion';
 const AboutMe = () => (
 
   <motion.section 
-    className="bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 space-y-4"
+    className="bg-light-card dark:bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 space-y-4 transition-colors duration-500"
     initial={{ opacity: 0, y: 50 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8, ease: 'easeOut' }}

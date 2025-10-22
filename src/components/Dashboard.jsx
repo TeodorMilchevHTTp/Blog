@@ -1,8 +1,10 @@
 import AboutMe from './AboutMe';
 import Projects from './Projects';
 import WebsiteLinks from './WebsiteLinks';
-import { Link } from 'react-router-dom';
 import CurrencyAPI from './CurrencyAPI';
+import ThemeToggle from './ThemeToggle';
+
+import { Link } from 'react-router-dom';
 import React from 'react';
 
 const Navbar = () => (
@@ -16,12 +18,16 @@ const Navbar = () => (
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-[#121212] text-white px-6 py-12">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#121212] text-gray-800 dark:text-white transition-colors duration-500 px-6 py-12">
+
       <div className="max-w-4xl mx-auto space-y-16">
         {/* Header */}
         <header className="text-center">
+          <div className="flex justify-end mb-4">
+            <ThemeToggle />
+          </div>
           <h1 className="text-4xl font-extrabold text-primary-100">Welcome to My Coding Portfolio</h1>
-          <p className="mt-2 text-slate-400">Built with React + Tailwind CSS</p>
+          <p className="mt-2 text-slate-500 dark:text-slate-400">Built with React + Tailwind CSS</p>
         </header>
 
         {/* Navbar */}
@@ -30,23 +36,23 @@ const Dashboard = () => {
         </header>
 
         {/* About Me Section */}
-        <section className="bg-[#1f1f1f] border border-white/10 rounded-xl p-6 shadow-lg">
+        <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
           <AboutMe />
         </section>
 
         {/* Projects Section */}
-        <section className="bg-[#1f1f1f] border border-white/10 rounded-xl p-6 shadow-lg">
+        <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
           <Projects />
         </section>
 
         {/* Currency API Section */}
-        <section className="bg-[#1f1f1f] border border-white/10 rounded-xl p-6 shadow-lg">
+        <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
           <h2 className="text-2xl font-semibold mb-4 text-primary-100 text-center">Live Exchange Rates</h2>
           <CurrencyAPI />
         </section>
 
         {/* Website Links Section */}
-        <section className="bg-[#1f1f1f] border border-white/10 rounded-xl p-6 shadow-lg">
+        <section className="bg-light-card dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 rounded-xl p-6 shadow-lg transition-colors duration-500">
           <WebsiteLinks />
         </section>
 

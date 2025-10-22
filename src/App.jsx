@@ -2,20 +2,22 @@ import './App.css';
 import './index.css';
 import Dashboard from './components/Dashboard';
 import Games from './components/Games';
-
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ThemeProvider } from './context/ThemeContext'; // <- Add this
 
 function App() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode='await'>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
-        <Route path="/games" element={<PageWrapper><Games /></PageWrapper>} />
-      </Routes>
-    </AnimatePresence>
+    <ThemeProvider>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageWrapper><Dashboard /></PageWrapper>} />
+          <Route path="/games" element={<PageWrapper><Games /></PageWrapper>} />
+        </Routes>
+      </AnimatePresence>
+    </ThemeProvider>
   );
 }
 
@@ -30,6 +32,6 @@ const PageWrapper = ({ children }) => {
       {children}
     </motion.div>
   );
-}
+};
 
 export default App;
