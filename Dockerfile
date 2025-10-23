@@ -6,12 +6,13 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
+# Copy all source code
 COPY . .
 
-# Build the React app
+# Build React app
 RUN npm run build
 
 EXPOSE 5000
 
+# Start backend (Express serves React build)
 CMD ["node", "backend/server.js"]

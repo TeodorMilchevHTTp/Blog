@@ -1,4 +1,21 @@
+version: "3.9"
+
 services:
+  mongodb:
+    image: mongo:latest
+    container_name: blog-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: blog
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - blog-network
+
   my-blog:
     build:
       context: .
@@ -7,6 +24,17 @@ services:
     ports:
       - "5002:5000"
     restart: unless-stopped
-      
-      
+    environment:
+      PORT: 5000
+      MONGODB_URI: mongodb://root:example@mongodb:27017/blog?authSource=admin
+    depends_on:
+      - mongodb
+    networks:
+      - blog-network
 
+volumes:
+  mongodb_data:
+
+networks:
+  blog-network:
+    driver: bridge
