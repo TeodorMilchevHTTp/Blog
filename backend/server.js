@@ -11,57 +11,34 @@ const fetch = require('node-fetch');
 const apiKey = process.env.FAST_FOREX_API_KEY;
 console.log("FAST_FOREX_API_KEY loaded:", apiKey ? "Yes" : "No");
 
-// Make MongoDB connection currently optional
+// MongoDB URI from environment
 const mongoUri = process.env.MONGODB_URI || '';
 
-
+// Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// --- API Routes ---
 
-
-// connect to MongoDB
-if (mongoUri.startsWith('mongodb://') || mongoUri.startsWith('mongodb+srv://')) {
-  mongoose.connect(mongoUri)
-  .then(() => {
-    console.log('MongoDB connected');
-  });
-
-  mongoose.connection.on('connected', () => {
-    console.log('Connected to MongoDB');
-  });
-
-  mongoose.connection.on('error', (err) => {
-    console.warn('MongoDB connection error, app will continue without database:', err.message);
-  });
-} else {
-  console.log('Running without MongoDB - using in-memory data for development');
-}
-
-// --- API routes should come BEFORE static and catch-all ---
-
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is healthy' });
 });
 
+// Exchange rates
 app.get('/api/rates', async (req, res) => {
   try {
-    // Fetch USD-based rates
     const usdRes = await fetch(`https://api.fastforex.io/fetch-multi?from=USD&to=EUR,GBP,JPY&api_key=${apiKey}`);
     const usdData = await usdRes.json();
 
-    // Fetch BGN-based rates
     const bgnRes = await fetch(`https://api.fastforex.io/fetch-multi?from=BGN&to=EUR,GBP,JPY&api_key=${apiKey}`);
     const bgnData = await bgnRes.json();
 
-    console.log('USD data:', usdData);
-    console.log('BGN data:', bgnData);
-
-    // Respond in the format the frontend expects
     res.json({
       usd: usdData.results || {},
       bgn: bgnData.results || {}
@@ -72,23 +49,46 @@ app.get('/api/rates', async (req, res) => {
   }
 });
 
-// Games router
+// Games routes (can fallback to in-memory if MongoDB fails)
 const gamesRouter = require('./routes/games');
 app.use('/games', gamesRouter);
 
-// Steam router
+// Steam routes
 const steamRouter = require('./routes/steam');
 app.use('/api/steam', steamRouter);
 
-
-// Serve static files from React build
+// Serve React static files
 app.use(express.static(path.join(__dirname, '..', 'build')));
 
-// Catch-all handler to serve React's index.html for any other routes
+// Catch-all to serve React index.html
 app.get('/', (req, res) => {
   res.sendFile(path.resolve(__dirname, '..', 'build', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// --- MongoDB connection and server start ---
+async function startServer() {
+  if (mongoUri.startsWith('mongodb://') || mongoUri.startsWith('mongodb+srv://')) {
+    try {
+      await mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log('MongoDB connected');
+    } catch (err) {
+      console.warn('MongoDB connection failed. Running in-memory mode:', err.message);
+    }
+
+    mongoose.connection.on('error', (err) => {
+      console.warn('MongoDB connection error:', err.message);
+    });
+  } else {
+    console.log('No MongoDB URI found. Running in-memory mode.');
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
+
+// Start the server
+startServer();
