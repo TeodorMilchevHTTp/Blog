@@ -6,14 +6,17 @@ const Games = () => {
   const [selectedGame, setSelectedGame] = useState(null);
   const [editGame, setEditGame] = useState(null);
   const [newReview, setNewReview] = useState('');
-  const isAdmin = (() => {
-    const user = localStorage.getItem('user');
-    return user && JSON.parse(user).role === 'admin';
-  })();
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [steamGames, setSteamGames] = useState([]);
 
+  // Check if user is admin
+  const isAdmin = (() => {
+    const user = localStorage.getItem('user');
+    return user && JSON.parse(user).role === 'admin';
+  })();
+
+  // Fetch Steam games on mount
   useEffect(() => {
     async function fetchSteamGames() {
       try {
@@ -27,42 +30,90 @@ const Games = () => {
     fetchSteamGames();
   }, []);
 
+  // Fetch games from backend on mount
+  useEffect(() => {
+  async function fetchGames() {
+    try {
+      const res = await fetch('/games');
+      if (!res.ok) throw new Error('Failed to fetch games');
+      const data = await res.json();
+      setGames(data);
+    } catch (err) {
+      console.error('Error loading games from DB:', err);
+    }
+  }
+
+  fetchGames();
+}, []);
+
+
+ // Delete game handler
   const handleDelete = (id) => {
     if (!isAdmin) return;
     setGames((prev) => prev.filter((game) => game.id !== id));
   };
 
+  // View game details handler
   const handleCardClick = (game) => setSelectedGame(game);
   const closeModal = () => setSelectedGame(null);
   const handleAddNewGameClick = () => setShowAddModal(true);
   const closeAddModal = () => setShowAddModal(false);
 
-  const handleSelectSteamGame = (game) => {
+  // Add new game handler
+  const handleSelectSteamGame = async (game) => {
+  try {
     const newGame = {
-      id: Date.now(),
       title: game.name,
       review: 'No opinion yet. (Admin can edit this)',
       appid: game.appid,
+      imageUrl: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`,
     };
-    setGames((prev) => [...prev, newGame]);
-    setShowAddModal(false);
-  };
 
+    const res = await fetch('/games', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGame),
+    });
+
+    if (!res.ok) throw new Error('Failed to save game');
+    const saved = await res.json();
+    setGames((prev) => [saved, ...prev]);
+    setShowAddModal(false);
+  } catch (err) {
+    console.error('Error adding game:', err);
+  }
+};
+
+  // Edit game handler
   const handleEditClick = (game) => {
     setEditGame(game);
     setNewReview(game.review || '');
   };
 
-  const handleSaveEdit = () => {
-    if (!isAdmin) return;
+  // Save edited review handler
+  const handleSaveEdit = async () => {
+  if (!isAdmin || !editGame) return;
+
+  try {
+    const res = await fetch(`/games/${editGame._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review: newReview }),
+    });
+
+    if (!res.ok) throw new Error('Failed to update review');
+    const updated = await res.json();
+
     setGames((prev) =>
-      prev.map((g) =>
-        g.id === editGame.id ? { ...g, review: newReview } : g
-      )
+      prev.map((g) => (g._id === updated._id ? updated : g))
     );
     setEditGame(null);
-  };
+  } catch (err) {
+    console.error('Error updating game:', err);
+  }
+};
 
+  // Filter Steam games based on search query
   const filteredSteamGames = steamGames.filter((g) =>
     g.name.toLowerCase().includes(searchQuery.toLowerCase())
   );

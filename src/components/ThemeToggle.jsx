@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 
+// ThemeToggle component to switch between light and dark modes
 const ThemeToggle = () => {
   const { darkMode, toggleTheme } = useTheme();
 

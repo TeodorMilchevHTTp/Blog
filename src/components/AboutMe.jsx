@@ -1,5 +1,7 @@
+//Import motion for animations
 import {motion} from 'framer-motion';
 
+//AboutMe component
 const AboutMe = () => (
 
   <motion.section 

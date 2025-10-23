@@ -28,17 +28,20 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
+  // Load user from localStorage on component mount
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
+  // Handle user logout
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
     navigate('/login');
   };
 
+  // Main render
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#121212] text-gray-800 dark:text-white transition-colors duration-500 px-6 py-12">
       <div className="max-w-4xl mx-auto space-y-16">

@@ -1,5 +1,6 @@
 import {motion} from 'framer-motion';
 
+// Individual Project Card Component
 const ProjectCard = ({ title, description, link }) => (
   <motion.a
     href={link}
@@ -24,7 +25,7 @@ const ProjectCard = ({ title, description, link }) => (
   </motion.a>
 );
 
-
+// Main Projects Component
 const Projects = () => {
   const projectList = [
     {

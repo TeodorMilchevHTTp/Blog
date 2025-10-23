@@ -20,6 +20,7 @@ router.post('/', async (req, res) => {
     const newGame = new Game({ title, review, appid, imageUrl });
     await newGame.save();
     res.status(201).json(newGame);
+    console.log('New game added:', newGame);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

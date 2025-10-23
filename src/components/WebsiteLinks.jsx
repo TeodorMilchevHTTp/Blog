@@ -1,4 +1,6 @@
+//Static website links component for personal blog
 const WebsiteLinks = () => {
+
   const links = [
     { name: "GitHub", url: "https://github.com/yourusername" },
     { name: "LinkedIn", url: "https://linkedin.com/in/yourusername" },

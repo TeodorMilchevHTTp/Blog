@@ -9,9 +9,10 @@ const CurrencyAPI = () => {
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef();
 
+  // Function to fetch exchange rates from backend API
   const fetchRates = async () => {
   try {
-    // Fetch from your backend API endpoint
+    // Fetch from backend
     const res = await fetch('/api/rates');
     if (!res.ok) throw new Error('Network response was not ok');
 
@@ -25,7 +26,7 @@ const CurrencyAPI = () => {
     setPrevRates(rates); // store previous before setting new
     setRates(newRates);
 
-    // Update history for sparklines
+    // Update history for sparklines library
     setRateHistory((prev) => {
       const updated = { usd: { ...prev.usd }, bgn: { ...prev.bgn } };
 
@@ -48,13 +49,14 @@ const CurrencyAPI = () => {
   }
 };
 
-
+  // Initial fetch and setup interval
   useEffect(() => {
     fetchRates();
     intervalRef.current = setInterval(fetchRates, 10000); // refresh every 10 sec
     return () => clearInterval(intervalRef.current);
   }, []);
 
+  // Loading state
   if (loading) return <p className="text-slate-400">Loading exchange rates...</p>;
 
   const currencies = Object.keys(rates.usd);
