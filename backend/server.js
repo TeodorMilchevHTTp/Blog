@@ -33,16 +33,23 @@ app.get('/health', (req, res) => {
 // Exchange rates
 app.get('/api/rates', async (req, res) => {
   try {
-    const usdRes = await fetch(`https://api.fastforex.io/fetch-multi?from=USD&to=EUR,GBP,JPY&api_key=${apiKey}`);
-    const usdData = await usdRes.json();
+    const currencies = ['EUR', 'GBP', 'JPY'];
+    const usdRates = {};
+    const bgnRates = {};
 
-    const bgnRes = await fetch(`https://api.fastforex.io/fetch-multi?from=BGN&to=EUR,GBP,JPY&api_key=${apiKey}`);
-    const bgnData = await bgnRes.json();
+    for (const cur of currencies) {
+      // Fetch USD → currency
+      const usdRes = await fetch(`https://api.fastforex.io/fetch-one?from=USD&to=${cur}&api_key=${apiKey}`);
+      const usdData = await usdRes.json();
+      usdRates[cur] = usdData.result?.[cur] || usdData.result || null;
 
-    res.json({
-      usd: usdData.results || {},
-      bgn: bgnData.results || {}
-    });
+      // Fetch BGN → currency
+      const bgnRes = await fetch(`https://api.fastforex.io/fetch-one?from=BGN&to=${cur}&api_key=${apiKey}`);
+      const bgnData = await bgnRes.json();
+      bgnRates[cur] = bgnData.result?.[cur] || bgnData.result || null;
+    }
+
+    res.json({ usd: usdRates, bgn: bgnRates });
   } catch (err) {
     console.error('Failed to fetch exchange rates:', err);
     res.status(500).json({ error: 'Failed to fetch data' });
