@@ -34,9 +34,9 @@ const Projects = () => {
       link: "https://tune-vote.pragmatino.xyz",
     },
     {
-      title: "Weather App",
-      description: "A weather forecast app using OpenWeatherMap API.",
-      link: "https://github.com/yourusername/weather-app",
+      title: "Typo.exe",
+      description: "A webstore for selling stuff.",
+      link: "https://github.com/TeodorMilchevHTTp/Store",
     },
     {
       title: "Task Manager",

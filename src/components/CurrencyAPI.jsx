@@ -18,6 +18,8 @@ const CurrencyAPI = () => {
 
     const data = await res.json();
 
+    console.log('Fetched data:', data); // <-- add this
+
     const newRates = {
       usd: data.usd || {},
       bgn: data.bgn || {}
