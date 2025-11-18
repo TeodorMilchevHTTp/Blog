@@ -1,61 +1,80 @@
-import {motion} from 'framer-motion';
+import { motion } from "framer-motion";
 
-// Individual Project Card Component
-const ProjectCard = ({ title, description, link }) => (
-  <motion.a
-    href={link}
-    target="_blank"
-    rel="noopener noreferrer"
-    whileHover={{scale: 1.1, rotate: -1}}
-    whileTap={{scale : 0.95, rotate: 0}}
-    className="block bg-gray-50 dark:bg-white/10 ... transition-colors duration-300"
-
+const ProjectRow = ({ title, description, tech, link }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.4 }}
+    className="flex flex-col md:flex-row items-center gap-6 p-4 rounded-xl bg-white dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 shadow-lg"
   >
-    {/* Optional: Website Thumbnail */}
+    {/* Thumbnail */}
     <img
       src={`https://image.thum.io/get/width/900/noanimate/${link}`}
-      alt={`${title} preview`}
-      //fix: image needs to fit in the card
-      className="rounded-md mb-4 w-full h-40 object-cover"
-      onError={(e) => (e.target.style.display = 'none')}
+      alt={title}
+      className="w-full md:w-48 h-32 object-cover rounded-lg"
+      onError={(e) => (e.target.style.display = "none")}
     />
-    <h3 className="text-lg font-semibold text-primary-100">{title}</h3>
-    <p className="text-gray-800 dark:text-slate-300 mt-2">{description}</p>
 
-  </motion.a>
+    {/* Text content */}
+    <div className="flex-1 space-y-2">
+      <h3 className="text-xl font-bold text-primary-100">{title}</h3>
+
+      <p className="text-gray-800 dark:text-slate-300">{description}</p>
+
+      {tech && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="font-semibold text-primary-100">Tech:</span> {tech}
+        </p>
+      )}
+
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block mt-2 px-4 py-2 rounded bg-primary-100 text-white hover:bg-primary-200 transition"
+      >
+        Visit Website
+      </a>
+    </div>
+  </motion.div>
 );
 
-// Main Projects Component
 const Projects = () => {
   const projectList = [
     {
       title: "Tune-Vote",
-      description: "A web app to vote for your favorite tunes in real-time.",
+      description: "A real-time voting app for music tracks.",
+      tech: "React, Express, WebSockets, MongoDB",
       link: "https://tune-vote.pragmatino.xyz",
     },
     {
-      title: "Typo.exe",
-      description: "A webstore for selling stuff.",
+      title: "Typo.exe Store",
+      description: "A custom e-commerce experience with product management.",
+      tech: "React, Node.js, REST API, Stripe",
       link: "https://github.com/TeodorMilchevHTTp/Store",
     },
     {
       title: "Task Manager",
-      description: "A to-do app with Firebase authentication and Firestore.",
+      description: "Task manager with Firebase Authentication + Firestore DB.",
+      tech: "React, Firebase, Tailwind",
       link: "https://github.com/yourusername/task-manager",
     },
   ];
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="bg-light-card dark:bg-white/10 backdrop-blur rounded-xl shadow-soft p-8 transition-colors duration-500"
+      transition={{ duration: 0.6 }}
+      className="space-y-6"
     >
-      <h2 className="text-2xl font-semibold text-primary-100 text-center mb-8">My Projects</h2>
-      <div className="grid gap-6 md:grid-cols-2">
-        {projectList.map((project, index) => (
-          <ProjectCard key={index} {...project} />
+      <h2 className="text-2xl font-semibold text-primary-100 text-center">
+        My Projects
+      </h2>
+
+      <div className="space-y-6">
+        {projectList.map((p, i) => (
+          <ProjectRow key={i} {...p} />
         ))}
       </div>
     </motion.section>

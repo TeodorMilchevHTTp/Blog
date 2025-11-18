@@ -8,14 +8,15 @@ const gameSchema = new mongoose.Schema({
   },
   review: {
     type: String,
-    required: true,
+    default: "",
   },
-  appid: {
+  status: {
     type: String,
+    enum: ['played', 'current', 'wishlist'],
+    default: 'current'
   },
-  imageUrl: {
-    type: String,
-  },
+  appid: String,
+  imageUrl: String,
   createdAt: {
     type: Date,
     default: Date.now,

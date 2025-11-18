@@ -1,7 +1,10 @@
-// routes/games.js
 const express = require('express');
 const router = express.Router();
+const fetch = require('node-fetch');
 const Game = require('../models/Games');
+// ---------------------
+// MongoDB CRUD Routes
+// ---------------------
 
 // Get all games
 router.get('/', async (req, res) => {
@@ -16,25 +19,56 @@ router.get('/', async (req, res) => {
 // Add a new game
 router.post('/', async (req, res) => {
   try {
-    const { title, review, appid, imageUrl } = req.body;
-    const newGame = new Game({ title, review, appid, imageUrl });
+    const { title, review, imageUrl, status } = req.body;
+
+    const newGame = new Game({
+      title,
+      review: review || '',
+      imageUrl,
+      status: status || 'current', // ✔ ensure valid
+    });
+
     await newGame.save();
     res.status(201).json(newGame);
+
     console.log('New game added:', newGame);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// Update a game's review/opinion
-router.put('/:id', async (req, res) => {
+// Update review
+router.put('/:id/review', async (req, res) => {
   try {
     const { review } = req.body;
+
     const updatedGame = await Game.findByIdAndUpdate(
       req.params.id,
       { review },
       { new: true }
     );
+
+    res.json(updatedGame);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Update status (move game between columns)
+router.put('/:id', async (req, res) => {
+  try {
+    if(req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden: Admins only' });
+    }
+    
+    const { status } = req.body;
+
+    const updatedGame = await Game.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
     res.json(updatedGame);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -48,6 +82,29 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Game deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------------
+// RAWG API Route
+// ---------------------
+
+router.get('/rawg', async (req, res) => {
+  try {
+    const apiKey = process.env.RAWG_API_KEY;
+    const pageSize = 50;
+    const searchQuery = req.query.search || '';
+
+    const url = `https://api.rawg.io/api/games?key=${apiKey}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}`;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`RAWG API error: ${response.statusText}`);
+
+    const data = await response.json();
+    res.json(data.results);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch RAWG games' });
   }
 });
 

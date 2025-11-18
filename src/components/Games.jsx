@@ -1,303 +1,333 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { FaArrowLeft, FaArrowRight, FaTimes, FaRegEye } from 'react-icons/fa';
 
+// ----------------------------
+// GameCard Component
+// ----------------------------
+const GameCard = ({ game, colId, moveGame, isAdmin, handleRemoveGame, setEditingGame, onView }) => (
+  <div
+    onClick={() => onView(game)}
+    className="relative flex items-center bg-white dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 p-3 rounded-xl shadow mb-2 transition-colors duration-500 cursor-pointer hover:scale-105 hover:shadow-lg"
+  >
+    {/* Thumbnail on the left */}
+    {(game.background_image || game.imageUrl) && (
+      <img
+        src={game.background_image || game.imageUrl}
+        alt={game.title}
+        className="w-24 h-24 object-cover rounded mr-4 flex-shrink-0"
+      />
+    )}
+
+    {/* Text content */}
+    <div className="flex-1">
+      <h3 className="text-md font-semibold text-gray-900 dark:text-gray-100">
+        {game.title}
+      </h3>
+      {game.review && (
+        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+          {game.review}
+        </p>
+      )}
+    </div>
+
+    {/* Admin Buttons */}
+    {isAdmin && (
+      <div className="absolute top-2 right-2 flex space-x-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleRemoveGame(colId, game._id); }}
+          className="p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors duration-300"
+        >
+          <FaTimes size={12} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setEditingGame(game); }}
+          className="p-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full transition-colors duration-300"
+        >
+          <FaRegEye size={12} />
+        </button>
+      </div>
+    )}
+
+    {/* Move Buttons */}
+    {isAdmin && colId !== 'played' && (
+      <button
+        onClick={(e) => { e.stopPropagation(); moveGame(game._id, colId, 'left'); }}
+        className="absolute left-[-16px] top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors duration-300"
+      >
+        <FaArrowLeft size={12} />
+      </button>
+    )}
+    {isAdmin && colId !== 'wishlist' && (
+      <button
+        onClick={(e) => { e.stopPropagation(); moveGame(game._id, colId, 'right'); }}
+        className="absolute right-[-16px] top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors duration-300"
+      >
+        <FaArrowRight size={12} />
+      </button>
+    )}
+  </div>
+);
+
+// ----------------------------
+// Games Page Component
+// ----------------------------
 const Games = () => {
-  const [games, setGames] = useState([]); // start empty
-  const [selectedGame, setSelectedGame] = useState(null);
-  const [editGame, setEditGame] = useState(null);
-  const [newReview, setNewReview] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [columns, setColumns] = useState({ played: [], current: [], wishlist: [] });
   const [searchQuery, setSearchQuery] = useState('');
-  const [steamGames, setSteamGames] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [editingGame, setEditingGame] = useState(null);
+  const [newThoughts, setNewThoughts] = useState('');
+  const [viewingGame, setViewingGame] = useState(null);
 
-  // Check if user is admin
   const isAdmin = (() => {
     const user = localStorage.getItem('user');
     return user && JSON.parse(user).role === 'admin';
   })();
 
-  // Fetch Steam games on mount
+  // Load games from DB
   useEffect(() => {
-    async function fetchSteamGames() {
-      try {
-        const res = await fetch('/api/steam/games');
-        const data = await res.json();
-        setSteamGames(data.applist.apps.slice(0, 1000));
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    fetchSteamGames();
+    const loadGames = async () => {
+      const res = await fetch('/games');
+      const data = await res.json();
+      setColumns({
+        played: data.filter(g => g.status === 'played'),
+        current: data.filter(g => g.status === 'current'),
+        wishlist: data.filter(g => g.status === 'wishlist'),
+      });
+    };
+    loadGames();
   }, []);
 
-  // Fetch games from backend on mount
-  useEffect(() => {
-  async function fetchGames() {
-    try {
-      const res = await fetch('/games');
-      if (!res.ok) throw new Error('Failed to fetch games');
-      const data = await res.json();
-      setGames(data);
-    } catch (err) {
-      console.error('Error loading games from DB:', err);
-    }
-  }
-
-  fetchGames();
-}, []);
-
-
- // Delete game handler
-  const handleDelete = (id) => {
-    if (!isAdmin) return;
-    setGames((prev) => prev.filter((game) => game.id !== id));
+  // RAWG Search
+  const handleSearch = async (query) => {
+    if (!query) return setSearchResults([]);
+    const res = await fetch(`/games/rawg?search=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    setSearchResults(data);
   };
 
-  // View game details handler
-  const handleCardClick = (game) => setSelectedGame(game);
-  const closeModal = () => setSelectedGame(null);
-  const handleAddNewGameClick = () => setShowAddModal(true);
-  const closeAddModal = () => setShowAddModal(false);
-
-  // Add new game handler
-  const handleSelectSteamGame = async (game) => {
-  try {
-    const newGame = {
-      title: game.name,
-      review: 'No opinion yet. (Admin can edit this)',
-      appid: game.appid,
-      imageUrl: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`,
-    };
-
+  // Add a new game to DB
+  const handleAddGame = async (game) => {
     const res = await fetch('/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGame),
+      body: JSON.stringify({
+        title: game.name || game.title,
+        review: '',
+        imageUrl: game.background_image || '',
+        status: 'current'
+      }),
     });
 
-    if (!res.ok) throw new Error('Failed to save game');
-    const saved = await res.json();
-    setGames((prev) => [saved, ...prev]);
-    setShowAddModal(false);
-  } catch (err) {
-    console.error('Error adding game:', err);
-  }
-};
+    const savedGame = await res.json();
 
-  // Edit game handler
-  const handleEditClick = (game) => {
-    setEditGame(game);
-    setNewReview(game.review || '');
+    setColumns(prev => ({
+      ...prev,
+      current: [savedGame, ...prev.current],
+    }));
+
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
-  // Save edited review handler
-  const handleSaveEdit = async () => {
-  if (!isAdmin || !editGame) return;
+  // Move game between columns & update DB
+  const moveGame = async (gameId, colId, direction) => {
+    if (!isAdmin) return;
 
-  try {
-    const res = await fetch(`/games/${editGame._id}`, {
+    const targetColId =
+      direction === 'left'
+        ? (colId === 'current' ? 'played' : 'current')
+        : (colId === 'current' ? 'wishlist' : 'current');
+
+    await fetch(`/games/${gameId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ review: newReview }),
+      headers: { 'Content-Type': 'application/json', 'x-user': localStorage.getItem('user') },
+      body: JSON.stringify({ status: targetColId }),
     });
 
-    if (!res.ok) throw new Error('Failed to update review');
-    const updated = await res.json();
+    setColumns(prev => {
+      const newCols = { ...prev };
+      const moved = newCols[colId].find(g => g._id === gameId);
+      newCols[colId] = newCols[colId].filter(g => g._id !== gameId);
+      newCols[targetColId] = [moved, ...newCols[targetColId]];
+      return newCols;
+    });
+  };
 
-    setGames((prev) =>
-      prev.map((g) => (g._id === updated._id ? updated : g))
-    );
-    setEditGame(null);
-  } catch (err) {
-    console.error('Error updating game:', err);
-  }
-};
+  // Save review (DB update)
+  const handleSaveThoughts = async () => {
+    await fetch(`/games/${editingGame._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review: newThoughts }),
+    });
 
-  // Filter Steam games based on search query
-  const filteredSteamGames = steamGames.filter((g) =>
-    g.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    setColumns(prev => {
+      const newCols = { ...prev };
+      Object.keys(newCols).forEach(col => {
+        newCols[col] = newCols[col].map(g =>
+          g._id === editingGame._id ? { ...g, review: newThoughts } : g
+        );
+      });
+      return newCols;
+    });
+
+    setEditingGame(null);
+    setNewThoughts('');
+  };
+
+  // Remove from DB
+  const handleRemoveGame = async (colId, gameId) => {
+    await fetch(`/games/${gameId}`, { method: 'DELETE' });
+    setColumns(prev => ({
+      ...prev,
+      [colId]: prev[colId].filter(g => g._id !== gameId),
+    }));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#121212] text-gray-900 dark:text-white px-6 py-12 transition-colors duration-500">
-      <div className="max-w-5xl mx-auto space-y-10">
-        {/* Header */}
-        <div>
-          <div className="flex items-center mb-6">
-            <Link
-              to="/"
-              className="flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition"
-            >
-              &larr; Back to Dashboard
-            </Link>
-          </div>
-          <h1 className="text-4xl font-extrabold text-primary-700 dark:text-primary-400 text-center">
-            Game Library
-          </h1>
-        </div>
+    <div className="min-h-screen bg-gray-100 dark:bg-[#121212] text-gray-800 dark:text-white px-6 py-8 transition-colors duration-500">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-        {/* Game Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              onClick={() => handleCardClick(game)}
-              className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/20 p-4 rounded-xl shadow-lg hover:shadow-xl cursor-pointer hover:scale-[1.03] transition-transform relative group"
-            >
-              {game.appid && (
-                <img
-                  src={`https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`}
-                  alt={game.title}
-                  className="rounded-md mb-3 w-full object-cover"
-                  onError={(e) => (e.target.style.display = 'none')}
-                />
-              )}
-              <h2 className="text-2xl font-semibold mb-2 text-primary-700 dark:text-primary-300">
-                {game.title}
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 line-clamp-3">
-                {game.review}
-              </p>
+        <Link
+          to="/"
+          className="text-primary-600 dark:text-primary-100 hover:underline transition-colors duration-300"
+        >
+          &larr; Back
+        </Link>
 
-              {isAdmin && (
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-3">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditClick(game);
-                    }}
-                    className="text-sm font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(game.id);
-                    }}
-                    className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md font-semibold shadow-md"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {isAdmin && (
-            <div
-              onClick={handleAddNewGameClick}
-              className="flex items-center justify-center bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/20 rounded-xl shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.03] transition-transform text-primary-600 dark:text-primary-400 text-6xl font-extrabold select-none"
-              style={{ aspectRatio: '1 / 1' }}
-            >
-              +
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Add Game Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-start justify-center z-50 pt-20 px-4">
-          <div className="bg-light-card dark:bg-[#1f1f1f] rounded-xl p-6 max-w-4xl w-full shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-primary-100">Add New Game</h2>
-              <button
-                onClick={closeAddModal}
-                className="text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold"
-              >
-                &times;
-              </button>
-            </div>
-
+        {/* Search */}
+        {isAdmin && (
+          <div className="mb-6">
             <input
               type="text"
-              placeholder="Search Steam Games..."
+              placeholder="Search games..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 rounded border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-white mb-4"
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                handleSearch(e.target.value);
+              }}
+              className="w-full p-3 rounded border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-gray-100 transition-colors duration-500"
             />
 
-            {searchQuery && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
-                {filteredSteamGames.map((game) => (
+            {searchResults.length > 0 && (
+              <div className="mt-2 flex space-x-4 overflow-x-auto py-2">
+                {searchResults.map((game) => (
                   <div
-                    key={game.appid}
-                    onClick={() => handleSelectSteamGame(game)}
-                    className="cursor-pointer hover:scale-105 transition-transform text-center"
+                    key={game.id}
+                    onClick={() => handleAddGame(game)}
+                    className="flex-none w-40 cursor-pointer border p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300"
                   >
                     <img
-                      src={`https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/capsule_231x87.jpg`}
+                      src={game.background_image}
                       alt={game.name}
-                      className="rounded-md mb-2 w-full object-cover"
-                      onError={(e) => (e.target.style.display = 'none')}
+                      className="w-full h-32 object-cover rounded mb-1"
                     />
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-300">{game.name}</p>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{game.name}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* View Game Modal (for all users) */}
-      {selectedGame && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/30 rounded-xl p-8 max-w-lg w-full relative shadow-xl">
-            <button
-              onClick={closeModal}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold transition"
+        {/* Horizontal Sections */}
+        <div className="space-y-8">
+          {['played', 'current', 'wishlist'].map((colId) => (
+            <section
+              key={colId}
+              className="bg-white dark:bg-[#1f1f1f] border border-gray-200 dark:border-white/10 p-4 rounded-xl shadow transition-colors duration-500"
             >
-              &times;
-            </button>
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100 text-center">
+                {colId === 'played' ? 'Played' : colId === 'current' ? 'Selected' : 'Wishlist'}
+              </h2>
 
-            {selectedGame.appid && (
+              <div className="flex flex-col space-y-3">
+                {columns[colId].map((game) => (
+                  <GameCard
+                    key={game._id}
+                    game={game}
+                    colId={colId}
+                    moveGame={moveGame}
+                    isAdmin={isAdmin}
+                    handleRemoveGame={handleRemoveGame}
+                    setEditingGame={setEditingGame}
+                    onView={setViewingGame}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {/* Zoom Modal */}
+        {viewingGame && (
+          <div
+            onClick={() => setViewingGame(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4"
+          >
+            <div
+              className="bg-white dark:bg-[#1f1f1f] rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                {viewingGame.title}
+              </h3>
+
               <img
-                src={`https://steamcdn-a.akamaihd.net/steam/apps/${selectedGame.appid}/capsule_231x87.jpg`}
-                alt={selectedGame.title}
-                className="rounded-md mb-4 w-full object-cover"
+                src={viewingGame.background_image || viewingGame.imageUrl}
+                alt={viewingGame.title}
+                className="w-full h-80 object-cover rounded mb-4"
               />
-            )}
+              {viewingGame.review && (
+                <p className="text-gray-700 dark:text-gray-300 text-center">{viewingGame.review}</p>
+              )}
 
-            <h2 className="text-3xl font-extrabold mb-5 text-primary-700 dark:text-primary-300">
-              {selectedGame.title}
-            </h2>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {selectedGame.review}
-            </p>
+              <button
+                onClick={() => setViewingGame(null)}
+                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-300"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Edit Game Modal (admin only) */}
-      {editGame && isAdmin && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-light-card dark:bg-[#1f1f1f] border border-gray-300 dark:border-white/30 rounded-xl p-8 max-w-md w-full relative shadow-xl">
-            <button
-              onClick={() => setEditGame(null)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-200 dark:text-gray-300 dark:hover:text-white text-2xl font-bold transition"
-            >
-              &times;
-            </button>
-            <h2 className="text-2xl font-bold mb-4 text-primary-700 dark:text-primary-300">
-              Edit Your Opinion for {editGame.title}
-            </h2>
-            <textarea
-              value={newReview}
-              onChange={(e) => setNewReview(e.target.value)}
-              className="w-full p-3 rounded-md border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-white mb-4"
-              rows={4}
-            />
-            <button
-              onClick={handleSaveEdit}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 rounded-md shadow-md transition"
-            >
-              Save Review
-            </button>
+        {/* Edit Modal */}
+        {editingGame && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-[#1f1f1f] p-6 rounded-xl max-w-md w-full shadow-lg transition-colors duration-500">
+              <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">
+                Edit Thoughts: {editingGame.title}
+              </h2>
+
+              <textarea
+                rows={4}
+                value={newThoughts}
+                onChange={(e) => setNewThoughts(e.target.value)}
+                className="w-full p-2 mb-4 rounded border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-[#1f1f1f] text-gray-900 dark:text-gray-100 transition-colors duration-500"
+              />
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setEditingGame(null)}
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveThoughts}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-300"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
     </div>
   );
 };

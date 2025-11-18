@@ -23,46 +23,20 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// --- API Routes ---
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is healthy' });
 });
 
-// Exchange rates
-app.get('/api/rates', async (req, res) => {
-  try {
-    const currencies = ['EUR', 'GBP', 'JPY'];
-    const usdRates = {};
-    const bgnRates = {};
-
-    for (const cur of currencies) {
-      // Fetch USD → currency
-      const usdRes = await fetch(`https://api.fastforex.io/fetch-one?from=USD&to=${cur}&api_key=${apiKey}`);
-      const usdData = await usdRes.json();
-      usdRates[cur] = usdData.result?.[cur] || usdData.result || null;
-
-      // Fetch BGN → currency
-      const bgnRes = await fetch(`https://api.fastforex.io/fetch-one?from=BGN&to=${cur}&api_key=${apiKey}`);
-      const bgnData = await bgnRes.json();
-      bgnRates[cur] = bgnData.result?.[cur] || bgnData.result || null;
-    }
-
-    res.json({ usd: usdRates, bgn: bgnRates });
-  } catch (err) {
-    console.error('Failed to fetch exchange rates:', err);
-    res.status(500).json({ error: 'Failed to fetch data' });
-  }
-});
-
 // Games routes (can fallback to in-memory if MongoDB fails)
 const gamesRouter = require('./routes/games');
 app.use('/games', gamesRouter);
 
-// Steam routes
-const steamRouter = require('./routes/steam');
-app.use('/api/steam', steamRouter);
+const cvRouter = require('./routes/cv');
+app.use('/api/cv', cvRouter);
 
 // Serve React static files
 app.use(express.static(path.join(__dirname, '..', 'build')));

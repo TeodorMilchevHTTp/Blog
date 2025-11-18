@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Dashboard from './components/Dashboard';
 import Games from './components/Games';
 import Login from './components/Login';
+import CVRequest from './components/CVRequest'
+import Links from './components/Links';
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
@@ -18,13 +20,13 @@ function App() {
 
   return (
     <ThemeProvider>
-      <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageWrapper><Dashboard user={user} /></PageWrapper>} />
-          <Route path="/games" element={<PageWrapper><Games user={user} /></PageWrapper>} />
-          <Route path="/login" element={<PageWrapper><Login setUser={setUser} /></PageWrapper>} />
+          <Route path="/" element={<Dashboard user={user} />} />
+          <Route path="/games" element={<Games user={user} />} />
+          <Route path="/cv" element={<CVRequest />} />
+          <Route path="/login" element={<Login setUser={setUser} />} />
+          <Route path="/links" element={<Links user={user} />} />
         </Routes>
-      </AnimatePresence>
     </ThemeProvider>
   );
 }

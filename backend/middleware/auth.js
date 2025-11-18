@@ -1,6 +1,11 @@
 // middleware/auth.js
-function isAdmin(req, res, next) {
-  if (req.user && req.user.role === 'admin') return next();
-  return res.status(403).json({ error: 'Access denied' });
-}
-module.exports = { isAdmin };
+module.exports = function (req, res, next) {
+  const user = req.headers['x-user'];
+
+  if (!user) return res.status(403).json({ error: "Not authorized" });
+
+  const parsed = JSON.parse(user);
+  req.user = parsed;
+
+  next();
+};
