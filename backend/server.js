@@ -5,12 +5,6 @@ const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Import fetch for Node <18
-const fetch = require('node-fetch');
-
-const apiKey = process.env.FAST_FOREX_API_KEY;
-console.log("FAST_FOREX_API_KEY loaded:", apiKey ? "Yes" : "No");
-
 // MongoDB URI from environment
 const mongoUri = process.env.MONGODB_URI || '';
 
@@ -23,20 +17,20 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is healthy' });
 });
 
-// Games routes (can fallback to in-memory if MongoDB fails)
-const gamesRouter = require('./routes/games');
-app.use('/games', gamesRouter);
+const cvRequestRouter = require('./routes/cv');  // Adjust the path based on your project structure
+app.use('/api/cv', cvRequestRouter);
 
-const cvRouter = require('./routes/cv');
-app.use('/api/cv', cvRouter);
+// Post routes (GET, POST, PUT, DELETE)
+const postRouter = require('./routes/posts');
+app.use('/api/posts', postRouter);
+
+const gameRouter = require('./routes/games');
+app.use('/games', gameRouter);  // Make sure this is correctly set
 
 // Serve React static files
 app.use(express.static(path.join(__dirname, '..', 'build')));

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 const Game = require('../models/Games');
+const auth = require('../middleware/auth');
 // ---------------------
 // MongoDB CRUD Routes
 // ---------------------
@@ -19,13 +20,18 @@ router.get('/', async (req, res) => {
 // Add a new game
 router.post('/', async (req, res) => {
   try {
-    const { title, review, imageUrl, status } = req.body;
+    // destructure all possible fields sent from the client
+    const { title, review, imageUrl, status, steam_url, genres, releaseDate, rating } = req.body;
 
     const newGame = new Game({
       title,
       review: review || '',
       imageUrl,
-      status: status || 'current', // ✔ ensure valid
+      steam_url: steam_url || '',
+      status: status || 'current',
+      genres: genres || [],
+      releaseDate: releaseDate || '',
+      rating: rating || null,
     });
 
     await newGame.save();
@@ -55,17 +61,21 @@ router.put('/:id/review', async (req, res) => {
 });
 
 // Update status (move game between columns)
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     if(req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden: Admins only' });
     }
-    
-    const { status } = req.body;
+
+    const { status, review } = req.body;
+
+    const updateFields = {};
+    if (status) updateFields.status = status;
+    if (review !== undefined) updateFields.review = review;
 
     const updatedGame = await Game.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updateFields,
       { new: true }
     );
 
@@ -75,8 +85,9 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+
 // Delete a game
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     await Game.findByIdAndDelete(req.params.id);
     res.json({ message: 'Game deleted successfully' });
@@ -92,19 +103,35 @@ router.delete('/:id', async (req, res) => {
 router.get('/rawg', async (req, res) => {
   try {
     const apiKey = process.env.RAWG_API_KEY;
-    const pageSize = 50;
     const searchQuery = req.query.search || '';
+    const pageSize = 20;
 
-    const url = `https://api.rawg.io/api/games?key=${apiKey}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}`;
-
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`RAWG API error: ${response.statusText}`);
-
+    const searchUrl = `https://api.rawg.io/api/games?key=${apiKey}&page_size=${pageSize}&search=${encodeURIComponent(searchQuery)}`;
+    const response = await fetch(searchUrl);
     const data = await response.json();
-    res.json(data.results);
+
+    const enriched = await Promise.all(
+      data.results.map(async (game) => {
+        const detailsRes = await fetch(
+          `https://api.rawg.io/api/games/${game.id}?key=${apiKey}`
+        );
+        const details = await detailsRes.json();
+
+        const steamStore = details.stores?.find(
+          (s) => s.store.name === "Steam"
+        );
+
+        return {
+          ...game,
+          steam_url: steamStore ? steamStore.url : "",
+        };
+      })
+    );
+
+    res.json(enriched);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to fetch RAWG games' });
+    res.status(500).json({ error: "Failed to fetch RAWG games" });
   }
 });
 

@@ -6,6 +6,7 @@ import Games from './components/Games';
 import Login from './components/Login';
 import CVRequest from './components/CVRequest'
 import Links from './components/Links';
+import Forum from './components/Forum';
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
@@ -20,13 +21,14 @@ function App() {
 
   return (
     <ThemeProvider>
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Dashboard user={user} />} />
-          <Route path="/games" element={<Games user={user} />} />
-          <Route path="/cv" element={<CVRequest />} />
-          <Route path="/login" element={<Login setUser={setUser} />} />
-          <Route path="/links" element={<Links user={user} />} />
-        </Routes>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Dashboard user={user} />} />
+        <Route path="/games" element={<Games user={user} />} />
+        <Route path="/cv" element={<CVRequest />} />
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/links" element={<Links user={user} />} />
+        <Route path="/forum" element={<Forum />} />
+      </Routes>
     </ThemeProvider>
   );
 }

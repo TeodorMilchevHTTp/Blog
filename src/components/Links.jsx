@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaPowerOff, FaGithub, FaLinkedin, FaInstagram, FaFacebook } from 'react-icons/fa';
 
-import ThemeToggle from './ThemeToggle';
+import ThemeToggle from '../subComponents/ThemeToggle';
 import Navbar from './Dashboard'; // you may need to export it from Dashboard
 import Projects from './Projects';
 import CVRequest from './CVRequest';

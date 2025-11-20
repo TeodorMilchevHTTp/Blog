@@ -10,8 +10,9 @@ const router = express.Router();
 router.post('/request', async (req, res) => {
   try {
     const { email, reason } = req.body;
-    if (!email || !reason)
+    if (!email || !reason) {
       return res.status(400).json({ error: 'Email and reason are required.' });
+    }
 
     const request = new CVRequest({ email, reason, status: 'pending' });
     await request.save();
@@ -34,6 +35,22 @@ router.get('/requests', async (req, res) => {
   }
 });
 
+// --- Get a single CV request by email ---
+router.get('/request-status', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const request = await CVRequest.findOne({ email });
+    if (!request) return res.status(404).json({ error: 'Request not found' });
+
+    res.json({ status: request.status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // --- Approve or Reject a request ---
 router.post('/approve/:id', async (req, res) => {
   try {
@@ -42,20 +59,17 @@ router.post('/approve/:id', async (req, res) => {
 
     if (!request) return res.status(404).json({ error: 'Request not found' });
 
-    // Handle rejection
     if (status === 'rejected') {
       await request.deleteOne();
       return res.json({ message: 'Request rejected and removed.' });
     }
 
-    // Handle approval
     if (status === 'approved') {
-      const cvPath = path.join(__dirname, '../assets/MyCV.pdf');
+      const cvPath = path.join(__dirname, '../../public/cv/MyCV.pdf');
       if (!fs.existsSync(cvPath)) {
         return res.status(500).json({ error: 'CV file not found on server.' });
       }
 
-      // Configure mail transport
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -64,12 +78,11 @@ router.post('/approve/:id', async (req, res) => {
         },
       });
 
-      // Compose email
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: request.email,
         subject: 'Your CV Request Has Been Approved',
-        text: 'Hello! Your CV request has been approved. Please find my CV attached. Thank you for your interest!',
+        text: 'Hello! Your CV request has been approved. Please find my CV attached.',
         attachments: [
           {
             filename: 'MyCV.pdf',
@@ -80,14 +93,13 @@ router.post('/approve/:id', async (req, res) => {
 
       await transporter.sendMail(mailOptions);
 
-      // Mark as approved in DB
       request.status = 'approved';
       await request.save();
 
-      return res.json({ message: 'Request approved and CV sent successfully.' });
+      return res.json({ message: 'Request approved and CV sent successfully via email.' });
     }
 
-    res.status(400).json({ error: 'Invalid status value' });
+    res.status(400).json({ error: 'Invalid status value. Use "approved" or "rejected".' });
   } catch (err) {
     console.error('Error updating request:', err);
     res.status(500).json({ error: 'Failed to update request' });
