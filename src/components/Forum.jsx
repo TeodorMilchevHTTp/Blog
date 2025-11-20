@@ -57,12 +57,6 @@ const Forum = () => {
     fetchPosts();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/login");
-  };
-
   const handlePostChange = (e) => {
     const { name, value } = e.target;
     setNewPost((prev) => ({
@@ -213,10 +207,10 @@ const Forum = () => {
 
           <div className="flex-1 text-center">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-cyan-200 to-white drop-shadow-[0_8px_32px_rgba(0,255,255,0.06)]">
-              Forum - Blog Posts
+              Forum
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Create, Edit, Delete, and View Blog Posts
+              All kinds of thingsi find interesting
             </p>
           </div>
         </header>

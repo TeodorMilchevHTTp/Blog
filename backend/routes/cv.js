@@ -70,6 +70,11 @@ router.post('/approve/:id', async (req, res) => {
         return res.status(500).json({ error: 'CV file not found on server.' });
       }
 
+      // Update status first so admin sees it immediately
+      request.status = 'approved';
+      await request.save();
+
+      // Send email asynchronously
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -84,19 +89,20 @@ router.post('/approve/:id', async (req, res) => {
         subject: 'Your CV Request Has Been Approved',
         text: 'Hello! Your CV request has been approved. Please find my CV attached.',
         attachments: [
-          {
-            filename: 'MyCV.pdf',
-            path: cvPath,
-          },
+          { filename: 'MyCV.pdf', path: cvPath }
         ],
       };
 
-      await transporter.sendMail(mailOptions);
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error(`Failed to send CV email to ${request.email}:`, err);
+        } else {
+          console.log(`CV email sent to ${request.email}:`, info.response);
+        }
+      });
 
-      request.status = 'approved';
-      await request.save();
-
-      return res.json({ message: 'Request approved and CV sent successfully via email.' });
+      // Respond immediately
+      return res.json({ message: 'Request approved. CV email is being sent.' });
     }
 
     res.status(400).json({ error: 'Invalid status value. Use "approved" or "rejected".' });
@@ -105,5 +111,7 @@ router.post('/approve/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to update request' });
   }
 });
+
+
 
 module.exports = router;
